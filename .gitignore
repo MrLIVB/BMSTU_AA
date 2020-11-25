@@ -1,0 +1,13 @@
+*.exe
+*.aux
+*.log
+*.cls
+*.bst
+*.clo
+*.info
+*.bbl
+*.dvi
+*.gz
+*.blg
+*.nlo
+*.out
