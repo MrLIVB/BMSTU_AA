@@ -1,0 +1,79 @@
+\chapter{Исследовательский раздел}
+\label{cha:research}
+В данном разделе будет измерено время работы алгоритмов и сделаны выводы на основе полученных данных.
+\section{Сравнительный анализ на основе замеров времени работы алгоритмов}
+Для каждого из алгоритмов был проведён замер времени на массивах длиной от 5 до 50000 тысяч, с шагом 5000, для каждой длины были проведены измерения на массивах, отсортированных в убывающем, возрастающем порядках и заполненных случайными элементами. Для каждого теста было проведено 10 замеров, на графиках представлен усреднённый результат.
+\par На рисунке 4.1 представлено сравнение времени работы алгоритмов при случайно заполненных массивах. На рисунках 4.1--4.3 время, обозначаемое t представлено в миллисекундах.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.5]
+\begin{axis}[
+axis lines = left,
+xlabel = {Длина массива},
+ylabel = {$t$},
+legend pos=north west,
+ymajorgrids=true,
+clip=false
+]
+\addplot[color=red, mark=square] table[x index=0, y index= 1] {src/tempRes/boubbleSortRandom.txt}; 
+\addplot[color=green, mark=square] table[x index=0, y index= 1] {src/tempRes/selectionSortRandom.txt}; 
+\addplot[color=blue, mark=square] table[x index=0, y index= 1] {src/tempRes/heapSortRandom.txt}; 
+
+\addlegendentry{Пузырьком с флагом}
+\addlegendentry{Выбором}
+\addlegendentry{Пирамидальная}
+\end{axis}
+\end{tikzpicture}
+\caption{Сравнение времени работы алгоритмов при случайно заполненных массивах}
+\end{figure}
+
+\par На рисунке 4.2 представлено сравнение времени работы алгоритмов при массивах, заполненных в возрастающем порядке.
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[scale=1.5]
+	\begin{axis}[
+	axis lines = left,
+	xlabel = {Длина массива},
+	ylabel = {$t$},
+	legend pos=north west,
+	ymajorgrids=true
+	]
+	\addplot[color=red, mark=square] table[x index=0, y index= 1] {src/tempRes/boubbleSortSortedA.txt}; 
+	\addplot[color=green, mark=square] table[x index=0, y index= 1] {src/tempRes/selectionSortSortedA.txt}; 
+	\addplot[color=blue, mark=square] table[x index=0, y index= 1] {src/tempRes/heapSortSortedA.txt}; 
+	
+	\addlegendentry{Пузырьком с флагом}
+	\addlegendentry{Выбором}
+	\addlegendentry{Пирамидальная}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Сравнение времени работы алгоритмов при массивах отсортированных в возрастающем порядке}
+\end{figure}
+
+\par На рисунке 4.3 представлено сравнение времени работы алгоритмов при массивах, заполненных в убывающем порядке.
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[scale=1.5]
+	\begin{axis}[
+	axis lines = left,
+	xlabel = {Длина массива},
+	ylabel = {$t$},
+	legend pos=north west,
+	ymajorgrids=true
+	]
+	\addplot[color=red, mark=square] table[x index=0, y index= 1] {src/tempRes/boubbleSortSortedD.txt}; 
+	\addplot[color=green, mark=square] table[x index=0, y index= 1] {src/tempRes/selectionSortSortedD.txt}; 
+	\addplot[color=blue, mark=square] table[x index=0, y index= 1] {src/tempRes/heapSortSortedD.txt}; 
+	
+	\addlegendentry{Пузырьком с флагом}
+	\addlegendentry{Выбором}
+	\addlegendentry{Пирамидальная}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Сравнение времени работы алгоритмов при массивах отсортированных в убывающем порядке}
+\end{figure}
+
+\par Из рисунков 4.1--4.3 видно, что наиболее эффективным по времени в случаях с случайно заполненными массивами и массивами, заполненными в убывающем порядке оказался алгоритм пирамидальной сортировки, в то время как сортировка пузырьком с флагом самая быстрая при массивах, отсортированных в возрастающем порядке.
+\par Таким образом, данные, полученные в результате проведённых экспериментов подтверждают корректность рассчитанных ранее трудоёмкостей алгоритмов.
+\par\textbf{Вывод} 
+\par В итоге, можно сказать о том, что пирамидальная сортировка является наиболее эффективной по времени среди рассмотренных алгоритмов.

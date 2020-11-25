@@ -1,0 +1,93 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+В данном разделе будут представлены листинги кода реализованных алгоритмов.
+\section{Средства реализации}
+В данной работе используется язык программирования С++. Среда разработки Visual Studio Code. Для замера процессорного времени используется функция QueryPerformanceCounter из библиотеки windows.h.
+\section{Листинг кода}
+В листингах 3.1--3.3 приведены коды алгоритмов сортировки пузырьком с флагом, сортировки выбором и пирамидальной.
+\begin{lstlisting}[caption= Сортировка пузырьком с флагом]
+void bubbleSort(array_t array)
+{
+	bool changed = false;
+	for (int i = 1; i < array.length; i++)
+	{
+		for (int j = 0; j < array.length - i; j++)
+			if (array.array[j + 1] < array.array[j])
+			{
+				const int temp = array.array[j];
+				array.array[j] = array.array[j + 1];
+				array.array[j + 1] = temp;
+				changed = true;
+			}
+		if (!changed)
+			break;
+	}
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption= Сортировка выбором]
+void selectionSort(array_t array)
+{
+	for(int i=0; i<array.length-1; i++)
+	{
+		int min_i = i;
+		for(int j=i+1;j<array.length;j++)
+		{
+			if (array.array[j] < array.array[min_i])
+			min_i = j;
+		}
+		if (min_i != i)
+		{
+			int tmp = array.array[i];
+			array.array[i] = array.array[min_i];
+			array.array[min_i] = tmp;
+		}        
+	}
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption= Пирамидальная сортировка и необходимая для её работы функция siftDown]
+void siftDown(array_t array, int i)
+{
+	int nMax = i;
+	int value = array.array[i];
+	while (true)
+	{
+		i = nMax;
+		int childN = i*2 + 1;
+		if ((childN < array.length) && (array.array[childN] > value))
+			nMax = childN;
+		childN++;
+		if ((childN < array.length) && (array.array[childN] > array.array[nMax]))
+			nMax = childN;
+		if (nMax == i)
+			break;
+		array.array[i] = array.array[nMax];
+		array.array[nMax] = value;
+	}
+}
+
+void heapSort(array_t array)
+{
+	for (int i = array.length / 2 -1; i >= 0; --i)
+		siftDown(array, i);
+	while (array.length > 1)
+	{
+		array.length--;
+		
+		int firstElement = array.array[0];
+		array.array[0] = array.array[array.length];
+		array.array[array.length] = firstElement;
+		
+		siftDown(array, 0);
+	}
+}
+\end{lstlisting}
+
+\section{Проведение тестирования}
+\label{sec:tests}
+Изначально было проведено тестирование алгоритма сортировки пузырьком на массивах: [1,2,1,1,1], [5,4,3,2,1], [1,2,3,4,5], [5,1,2,4,3], все тесты были пройдены успешно.
+\par После чего была проведена серия тестов на массивах длиной от 1 до 10. Сначала выполнялась сортировка пузырьковым алгоритмом, результат которого принимался за контрольное значение, после чего результаты сортировки алгоритмом выбора и пирамидальной сортировки сравнивались с контрольным значением и при совпадении результат считался корректным. Массивы заполнялись случайным образом и в возрастающем порядке. Все тесты были пройдены успешно.
+%%%% mode: latex
+%%%% TeX-master: "rpz"
+%%%% End:
