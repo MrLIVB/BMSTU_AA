@@ -1,0 +1,212 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+В данном разделе будут представлены листинги кода реализованных алгоритмов.
+\section{Средства реализации}
+В данной работе используется язык программирования С++. Среда разработки Visual Studio Code. Для замера процессорного времени используется функция QueryPerformanceCounter из библиотеки windows.h. Параллельные вычисления выполняются с использование библиотеки <thread> \cite{threads}.
+\par Замеры времени были произведены на: Intel(R) Core(TM) i5-8250U CPU @1.60GHz 1.80 Ghz, 4 ядра, 8 логических процессоров.
+
+\section{Листинг кода}
+В листинге \ref{code:lin}приведен код последовательной реализации алгоритма Винограда.
+\begin{lstlisting}[caption= Алгоритм Винограда, label=code:lin]
+void multiplyMatricesWinograd(int **matrix1, int m, int n, int **matrix2, int q, int **result)
+{
+	int buf;
+	const int isOdd = n % 2;
+	const int t = n - 1;
+	if (isOdd)
+	n -= 1;
+	
+	int *mulH = new int[m];
+	for (int i = 0; i < m; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+		buf -= matrix1[i][k] * matrix1[i][k + 1];
+		mulH[i] = buf;
+	}
+	
+	int *mulV = new int[q];
+	for (int i = 0; i < q; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+		buf -= matrix2[k][i] * matrix2[k + 1][i];
+		mulV[i] = buf;
+	}
+	
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < q; j++)
+		{
+			buf = mulH[i] + mulV[j];
+			for (int k = 0; k < n; k += 2)
+			buf += (matrix1[i][k] + matrix2[k + 1][j]) * (matrix1[i][k + 1] + matrix2[k][j]);
+			result[i][j] = buf;
+		}
+	}
+	
+	if (isOdd)
+	{
+		for (int i = 0; i < m; i++)
+		for (int j = 0; j < q; j++)
+		result[i][j] += matrix1[i][t] * matrix2[t][j];
+	}
+	
+	delete[] mulH;
+	delete[] mulV;
+}
+\end{lstlisting}
+
+\par В листинге \ref{code:p1} представлен код параллельной реализации алгоритма Винограда, в которой потоки выполняют подсчёт строк в главном цикле.
+\begin{lstlisting}[caption= Первая параллельная реализация алгоритма Винограда, label=code:p1]
+void parallelMainCycle(int **matrix1, int **matrix2, int *mulH, int *mulV,  int rs, int re, int columns, int rows, int **result)
+{
+	int buf;
+	for (int i = rs; i < re; i++)
+	{
+		for (int j = 0; j < rows; j++)
+		{
+			buf = mulH[i] + mulV[j];
+			for (int k = 0; k < columns; k += 2)
+			buf += (matrix1[i][k] + matrix2[k + 1][j]) * (matrix1[i][k + 1] + matrix2[k][j]);
+			result[i][j] = buf;
+		}
+	}
+}
+
+void multiplyMatricesWinogradP1(int **matrix1, int m, int n, int **matrix2, int q, int **result, int nThreads)
+{
+	int buf;
+	const int isOdd = n % 2;
+	const int t = n - 1;
+	if (isOdd)
+	n -= 1;
+	
+	int *mulH = new int[m];
+	for (int i = 0; i < m; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+		buf -= matrix1[i][k] * matrix1[i][k + 1];
+		mulH[i] = buf;
+	}
+	
+	int *mulV = new int[q];
+	for (int i = 0; i < q; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+		buf -= matrix2[k][i] * matrix2[k + 1][i];
+		mulV[i] = buf;
+	}
+	
+	thread* threads = new thread[nThreads];
+	int rows = m / nThreads;
+	int rs = 0;
+	for (int t = 0; t < nThreads; t++)
+	{
+		int re = t == nThreads - 1 ? m : (rs + rows);
+		threads[t] = thread(parallelMainCycle, matrix1, matrix2, mulH, mulV, rs, re, n, q, result);
+		rs = re;
+	}
+	
+	for (int i = 0; i < nThreads; i++)
+	threads[i].join();
+	
+	if (isOdd)
+	{
+		for (int i = 0; i < m; i++)
+		for (int j = 0; j < q; j++)
+		result[i][j] += matrix1[i][t] * matrix2[t][j];
+	}
+	
+	delete[] threads;
+	delete[] mulH;
+	delete[] mulV;
+}
+\end{lstlisting}
+
+\par В листинге \ref{code:p1} представлен код параллельной реализации алгоритма Винограда, в которой потоки выполняют подсчёт массивов mulV и mulH.
+\begin{lstlisting}[caption= Первая параллельная реализация алгоритма Винограда, label=code:p2]
+void parallelMul(int **matrix1, int vs, int ve, int n, int **matrix2, int hs, int he, int *mulV, int *mulH)
+{
+	int buf;
+	for (int i = vs; i < ve; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+		buf -= matrix1[i][k] * matrix1[i][k + 1];
+		mulH[i] = buf;
+	}
+	
+	for (int i = hs; i < he; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+		buf -= matrix2[k][i] * matrix2[k + 1][i];
+		mulV[i] = buf;
+	}
+}
+
+void multiplyMatricesWinogradP2(int **matrix1, int m, int n, int **matrix2, int q, int **result, int nThreads)
+{
+	int buf;
+	const int isOdd = n % 2;
+	const int t = n - 1;
+	if (isOdd)
+	n -= 1;
+	
+	int *mulH = new int[m];
+	int *mulV = new int[q];
+	
+	thread *threads = new thread[nThreads];
+	int vs = 0;
+	int vt = m / nThreads;
+	int hs = 0;
+	int ht = q / nThreads;
+	for (int t = 0; t < nThreads; t++)
+	{
+		int ve = t == nThreads - 1 ? m : (vs + vt);
+		int he = t == nThreads - 1 ? q : (hs + ht);
+		threads[t] = thread(parallelMul, matrix1, vs, ve, n, matrix2, hs, he, mulV, mulH);
+		
+		vs = ve;
+		hs = he;
+	}
+	
+	for (int i = 0; i < nThreads; i++)
+	threads[i].join();
+	
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < q; j++)
+		{
+			buf = mulH[i] + mulV[j];
+			for (int k = 0; k < n; k += 2)
+			buf += (matrix1[i][k] + matrix2[k + 1][j]) * (matrix1[i][k + 1] + matrix2[k][j]);
+			result[i][j] = buf;
+		}
+	}
+	
+	if (isOdd)
+	{
+		for (int i = 0; i < m; i++)
+		for (int j = 0; j < q; j++)
+		result[i][j] += matrix1[i][t] * matrix2[t][j];
+	}
+	
+	delete[] mulH;
+	delete[] mulV;
+}
+\end{lstlisting}
+
+\section{Проведение тестирования}
+\label{sec:tests}
+Изначально было проведено тестирование стандартного алгоритма умножения матриц на квадратных матрицах размерами $0\times0,\,1\times1,\,3\times3,\,6\times6$ и прямоугольных $1\times2\bullet 2\times1,\,2\times4\bullet4\times2$ и $3\times5\bullet5\times5$, все тесты были пройдены успешно.
+\par После чего была проведена серия тестов на матрицах $A=M\times Q$ и $B=Q\times N$, где M, N, Q принимают значения от 1 до 10, независимо друг от друга, матрицы заполняются случайными значениями. Сначала выполнялось умножение стандартным алгоритмом, результат которого принимался за контрольное значение, после чего результаты алгоритма Винограда и оптимизированного алгоритма Винограда сравнивались с контрольным значением и при совпадении результат считался корректным. Все тесты были пройдены успешно.
+
+\par\textbf{Вывод.}
+\par В данном разделе были рассмотрены листинги кода реализованных алгоритмов, а также их тестирование.
+%%%% mode: latex
+%%%% TeX-master: "rpz"
+%%%% End:

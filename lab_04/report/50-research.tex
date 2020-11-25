@@ -1,0 +1,105 @@
+\chapter{Исследовательский раздел}
+\label{cha:research}
+\textbf{ДОБАВИТЬ ОПИСАНИЕ ЛЕГЕНД}
+В данном разделе будет измерено время работы алгоритмов и сделаны выводы на основе полученных данных.
+\section{Сравнительный анализ на основе замеров времени работы алгоритмов}
+Для каждого из алгоритмов был проведён замер времени на квадратных матрицах размерами от 100 до 1000, с шагом 100, матрицы заполнены случайными элементами. Для каждого теста было проведено 5 замеров, на графиках представлен усреднённый результат. На рисунках 4.1--4.3 время, обозначаемое t представлено в миллисекундах.
+\par На рисунке \ref{par1} представлено сравнение времени работы реализации алгоритма умножения матриц Винограда с параллельным главным циклом. Числами обозначено количество выделенных потоков.
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[scale=1.5]
+		\begin{axis}[
+			axis lines = left,
+			xlabel = {Длина массива},
+			ylabel = {$t$},
+			legend pos=north west,
+			ymajorgrids=true,
+			clip=false
+			]
+			\addplot[color=red, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_1}; 
+			\addplot[color=green, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_2}; 
+			\addplot[color=yellow, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_4}; 
+			\addplot[color=pink, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_8}; 
+			\addplot[color=black, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_16}; 
+			\addplot[color=blue, mark=round] table[x index=0, y index= 1] {src/tempRes/parallel1_32}; 
+			
+			\addlegendentry{1}
+			\addlegendentry{2}
+			\addlegendentry{4}
+			\addlegendentry{8}
+			\addlegendentry{16}
+			\addlegendentry{32}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Сравнение времени работы алгоритма Винограда с параллельным главным циклом}
+	\label{par1}
+\end{figure}
+\par Из графика \ref{par1} становится ясно, что прирост производительности имеет место только при увеличении числа потоков до 4, после чего она меняется незначительно.
+
+\par На рисунке \ref{par2} представлено сравнение времени работы реализации алгоритма умножения матриц Винограда с параллельным вычислением массивов mulH и mulV. Числами обозначено количество выделенных потоков.
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[scale=1.5]
+		\begin{axis}[
+			axis lines = left,
+			xlabel = {Длина массива},
+			ylabel = {$t$},
+			legend pos=north west,
+			ymajorgrids=true,
+			clip=false
+			]
+			\addplot[color=red, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel2_1}; 
+			\addplot[color=green, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel2_2}; 
+			\addplot[color=yellow, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel2_4}; 
+			\addplot[color=pink, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel2_8}; 
+			\addplot[color=black, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel2_16}; 
+			\addplot[color=blue, mark=round] table[x index=0, y index= 1] {src/tempRes/parallel2_32}; 
+			
+			\addlegendentry{1}
+			\addlegendentry{2}
+			\addlegendentry{4}
+			\addlegendentry{8}
+			\addlegendentry{16}
+			\addlegendentry{32}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Сравнение времени работы алгоритма Винограда с параллельным вычислением mulV и mulH}
+	\label{par2}
+\end{figure}
+\par Из графика \ref{par2} видно, что распараллелиливание вычисления массивов mulV и mulH не имеет смысла, так как практически уменьшает затраты по времени.
+
+\par На рисунке \ref{com} представлено сравнение времени работы последовательной реализации алгоритма Винограда и его параллельных реализаций. На графике введены обозначения: <<последовательный>> -- последовательный алгоритм Винограда, <<Main>> -- параллельно выполняется главный цикл, <<Mul>> -- параллельно считаются массивы mulV и mulH, цифры рядом - количество выделенных потоков.
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[scale=1.5]
+		\begin{axis}[
+			axis lines = left,
+			xlabel = {Длина массива},
+			ylabel = {$t$},
+			legend pos=north west,
+			ymajorgrids=true,
+			clip=false
+			]
+			\addplot[color=red, mark=square] table[x index=0, y index= 1] {src/tempRes/linear}; 
+			\addplot[color=green, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_1}; 
+			\addplot[color=yellow, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_2}; 
+			\addplot[color=pink, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel1_4}; 
+			\addplot[color=black, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel2_1}; 
+			\addplot[color=blue, mark=square] table[x index=0, y index= 1] {src/tempRes/parallel2_2}; 
+ 
+			\addlegendentry{Последовательный}
+			\addlegendentry{Main 1}
+			\addlegendentry{Main 2}
+			\addlegendentry{Main 4}
+			\addlegendentry{Mul 1}
+			\addlegendentry{Mul 2}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Сравнение времени работы алгоритма Винограда и его параллельных реализаций}
+	\label{com}
+\end{figure}
+\par Из рисунка \ref{com} становится ясно, что наиболее эффективным является умножение матриц алгоритмом Винограда с параллельным главным циклом, в то время как использование параллельных вычислений при подсчёте массивов mulV и mulH не даёт результатов по сравнению с последовательной реализацией.
+
+\par\textbf{Вывод} 
+\par В итоге, можно сказать о том, что параллельное вычисление главного цикла в алгоритме Винограда является самым эффективным способом уменьшения затрачиваемого времени из рассмотренных.
