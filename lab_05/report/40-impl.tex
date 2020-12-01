@@ -1,0 +1,154 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+В данном разделе будут представлены листинги кода реализованных алгоритмов и дано описание получаемых результатов работы программы.
+
+\section{Средства реализации}
+\label{sec:realisation}
+В данной работе используется язык программирования С++. Среда разработки Visual Studio Code. Для замера процессорного времени используется функция QueryPerformanceCounter из библиотеки windows.h. Параллельные вычисления выполняются с использование библиотеки <thread> \cite{threads}, а также применяются mutex из библиотеки <mutex>.
+\par Замеры времени были произведены на: Intel(R) Core(TM) i5-8250U CPU @1.60GHz 1.80 Ghz, 4 ядра, 8 логических процессоров.
+
+\section{Листинг кода}
+\label{sec:listings}
+В листинге \ref{code:xor} приведен код алгоритма XOR-шифрования.
+\begin{lstlisting}[caption= Алгоритм XOR-шифра, label=code:xor]
+int xorCrpyt(char *string, int l, bitset<8> keyToEncrypt)
+{
+	for (int i = 0; i < l; i++)
+	string[i] ^= keyToEncrypt.to_ulong();
+	return 0;
+}
+\end{lstlisting}
+
+\par В листинге \ref{code:caesar} представлен код алгоритма шифра Цезаря.
+\begin{lstlisting}[caption= Алгоритм шифра Цезаря, label=code:caesar]
+int caesarCrypt(char *string, int l, int shift)
+{
+	for (int i = 0; i < l; i++)
+	string[i] = (string[i] - 97 + shift) % 26 + 97;
+	return 0;
+}
+\end{lstlisting}
+
+\par В листингах \ref{code:part1}-\ref{code:part3} представлен код 3 этапов выполнения конвейера.
+\begin{lstlisting}[caption= Первый этап выполнения конвейера, label=code:part1]
+void Conveyor::part1()
+{
+	while (this->ft1 < this->taskNumber)
+	{
+		Request *req;
+		if (this->startingQ.size())
+		{
+			req = this->startingQ.front();
+			this->startingQ.pop();
+		}
+		else
+		continue;
+		
+		req->s1 = GetTimestamp();
+		
+		caesarCrypt(req->string, req->l, 12);
+		
+		req->e1 = GetTimestamp();
+		
+		this->ft1++;
+		
+		this->m1.lock();
+		this->q2.push(req);
+		this->m1.unlock();
+	}
+}
+\end{lstlisting}
+\begin{lstlisting}[caption= Второй этап выполнения конвейера, label=code:part2]
+void Conveyor::part2()
+{
+	while (this->q2.size() == 0)
+	continue;
+	
+	while (this->ft2 < this->taskNumber)
+	{
+		while (this->q2.size() == 0)
+		continue;
+		
+		Request *req;
+		
+		this->m1.lock();
+		req = this->q2.front();
+		this->q2.pop();
+		this->m1.unlock();
+		
+		req->s2 = GetTimestamp();
+		bitset<8> key('e');
+		
+		xorCrpyt(req->string, req->l, key);
+		req->e2 = GetTimestamp();
+		
+		this->ft2++;
+		
+		this->m2.lock();
+		this->q3.push(req);
+		this->m2.unlock();
+	}
+}
+\end{lstlisting}
+\begin{lstlisting}[caption= Третий этап выполнения конвейера, label=code:part3]
+void Conveyor::part3()
+{
+	while (this->q3.size() == 0)
+	continue;
+	
+	while (this->ft3 < this->taskNumber)
+	{
+		while (this->q3.size() == 0)
+		continue;
+		
+		Request *req;
+		this->m2.lock();
+		req = this->q3.front();
+		this->q3.pop();
+		this->m2.unlock();
+		
+		req->s3 = GetTimestamp();
+		
+		bitset<8> key('k');
+		xorCrpyt(req->string, req->l, key);
+		req->e3 = GetTimestamp();
+		
+		this->ft3++;
+		this->result.push_back(req);
+	}
+}	
+\end{lstlisting}
+\par В листинге \ref{code:run} представлен код основного потока и генератора заявок.
+\begin{lstlisting}[caption= Третий этап выполнения конвейера, label=code:run]
+void Conveyor::run()
+{
+	generateRequests();
+	
+	thread t1 = thread(&Conveyor::part1, this);
+	thread t2 = thread(&Conveyor::part2, this);
+	thread t3 = thread(&Conveyor::part3, this);
+	
+	t1.join();
+	t2.join();
+	t3.join();
+}
+
+void Conveyor::generateRequests()
+{
+	for (int i = 0; i < taskNumber; i++)
+	{
+		Request *req = new Request(taskLength);
+		req->number = i;
+		stringGenerator(req->string, req->l);
+		startingQ.push(req);
+	}
+	cout << startingQ.size();
+}
+\end{lstlisting}
+
+\section{Собираемые данные}
+\label{sec:tests}
+Результатом работы программы является массив зашифрованных строк, создаваемых случайно, все строки равной длины и данные о времени начала и конца обработки каждой из заявок в 1, 2 и 3 этапах. Зная эту информацию, мы можем получить ифнормацию о максимальном, минимальном, среднем времени во 2 и 3 очередях и в системе вообще.
+
+\par\textbf{Вывод.}
+\par В данном разделе были рассмотрены листинги кода реализованных алгоритмов и конвейера, описаны результаты работы программы.
