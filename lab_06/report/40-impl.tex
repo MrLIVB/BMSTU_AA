@@ -1,0 +1,179 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+В данном разделе будут представлены листинги кода реализованных алгоритмов и дано описание получаемых результатов параметризации программы.
+
+\section{Средства реализации}
+\label{sec:realisation}
+В данной работе используется язык программирования Python. Среда разработки Visual Studio Code. Для замера процессорного времени используется функция process\_time() из библиотеки time.
+\par Замеры времени были произведены на: Intel(R) Core(TM) i5-8250U CPU @1.60GHz 1.80 Ghz, 4 ядра, 8 логических процессоров.
+
+\section{Листинг кода}
+\label{sec:listings}
+В листинге \ref{code:ets} приведен код алгоритма полного перебора.
+\begin{lstlisting}[caption= Алгоритм полного перебора, label=code:ets]
+class Graph():
+	def __init__(self, _n, _c=None):
+		self.nodes = _n
+		self.c = _c
+	
+	def ets(self):
+		start = [i for i in range(1, self.nodes)]
+		min_len = float("inf")
+		min_rout = [0 for _ in range(self.nodes)]
+		routs = permutations(start)
+		for rout in routs:
+			rout = list(rout)
+			rout.insert(0, 0)
+			rout.append(0)
+			cur_len = self.count_cost(rout)
+			if cur_len < min_len:
+				min_len = cur_len
+				min_rout = rout
+		return min_rout
+\end{lstlisting}
+
+\par В листинге \ref{code:anta} представлен код муравьиного алгоритма.
+\begin{lstlisting}[caption= Муравьиный алгоритм, label=code:anta]
+class Graph():
+	def __init__(self, _n, _c=None):
+		self.nodes = _n
+		self.c = _c
+	def ant_solve(self, herd, greed, evaportion, tmax):
+		pheromones = [[0.1 for _ in range(self.nodes)] for _ in range(self.nodes)]
+		visibility = [[1 / self.c[j][i] for j in range(self.nodes)] for i in range(self.nodes)]
+		q = self.calculate_q()
+		
+		min_len = 0
+		for i in range(1,self.nodes):
+		min_len += self.c[i-1][i]
+		min_len += self.c[self.nodes-1][0]
+		min_rout = [i for i in range(self.nodes)]
+		min_rout.append(0)
+		
+		possibilities = [i for i in range(self.nodes)]
+		ants = [Ant(i,possibilities,herd,greed) for i in range(self.nodes)]
+		
+		for i in range(tmax):
+			delta_pher = 0
+			for i in range(self.nodes):
+				ants[i].find_way(pheromones,visibility)
+				l = self.count_cost(ants[i].rout)
+				ph = q / l
+				delta_pher += ph
+				
+				if l < min_len:
+				min_len = l
+				min_rout = [ants[i].rout[j] for j in range(len(ants[i].rout))]
+				
+				ants[i].reset(possibilities)
+			
+			for i in range(self.nodes):
+				for j in range(self.nodes):
+					if i != j:
+						pheromones[i][j] *= (1 - evaportion)
+						pheromones[i][j] += delta_pher
+		
+	return min_rout
+\end{lstlisting}
+
+\par В листинге \ref{code:ant} представлен код класса муравья.
+\begin{lstlisting}[caption= Класс муравья, label=code:ant]
+class Ant():
+	def __init__(self, start, possibilities, _herd, _greed):
+		self.possibilities = [possibilities[i] for i in range(len(possibilities))]
+		self.possibilities.remove(start)
+		self.base_pos = start
+		self.pos = start
+		self.herd = _herd
+		self.greed = _greed
+		self.rout = []
+		self.rout.append(start)
+	
+	def find_way(self, pheromones, visibility):
+		while 1:
+			chances = []
+			zn = 0
+			for city in self.possibilities:
+				t = pow(pheromones[self.pos][city], self.herd) * pow(visibility[self.pos][city], self.greed)
+				zn += t
+				chances.append([city, t])
+			for i in range(len(self.possibilities)):
+				chances[i][1] = chances[i][1] / zn
+			
+			city = self.make_choice(chances)
+			self.pos = city
+			self.possibilities.remove(city)
+			self.rout.append(city)
+			if len(self.possibilities) == 0:
+				break
+	
+		self.rout.append(self.base_pos)
+	
+	def make_choice(self, chances):
+		chances_sum = 0
+		for chance in chances:
+		chances_sum += chance[1]
+		choice = uniform(0, chances_sum)     
+		next_city = 0
+		
+		t = 0
+		while choice > 0:
+			choice -= chances[t][1]
+			t += 1
+		next_city = chances[t-1][0]
+		return next_city
+	
+	def reset(self, possibilities):
+		self.possibilities = [possibilities[i] for i in range(len(possibilities))]
+		self.possibilities.remove(self.base_pos)
+		self.pos = self.base_pos
+		self.rout = [self.base_pos]
+
+\end{lstlisting}
+
+\par В листинге \ref{code:run} представлен код процесса параметризации.
+\begin{lstlisting}[caption= Параметриазция, label=code:run]
+def parametrization():
+	g = Graph(10, matr1)
+	g2 = Graph(10, matr3)
+	
+	reference1 = g.ets()
+	reference_l1 = g.count_cost(reference1)
+	
+	reference2 = g2.ets()
+	reference_l2 = g2.count_cost(reference2)
+	
+	f = open("parametrisation.txt", 'w')
+	for herd in range(0, 10, 2):
+		for greed in range(0, 10, 2):
+			evaporation = 0.1
+			while evaporation < 1:
+				for days in range(10, 51, 10):
+					f.write("{:2d} {:.1f} {:2d} ".format(herd, evaporation, days))
+					
+					rout1 = g.ant_solve(herd, greed, evaporation, days)
+					rout2 = g.ant_solve(herd, greed, evaporation, days)
+					l11 = g.count_cost(rout1)
+					l12 = g.count_cost(rout2)
+					tl1 = min(l11, l12)
+					l1 = reference_l1 - tl1
+					
+					rout1 = g2.ant_solve(herd, greed, evaporation, days)
+					rout2 = g2.ant_solve(herd, greed, evaporation, days)
+					l21 = g2.count_cost(rout1)
+					l22 = g2.count_cost(rout2)
+					tl2 = min(l21, l22)
+					l2 = reference_l1 - tl2
+					
+					f.write("{:2d} {:2d} {:2d} {:2d}\n".format(tl1, tl2, l1, l2))
+				
+				evaporation += 0.2
+\end{lstlisting}
+
+\section{Собираемые данные}
+\label{sec:tests}
+В результате параметризации формируется файл каждая строка которого -- комбинация параметров и полученные длины маршрутов и разность их и эталонных.
+
+\section{Вывод.}
+\label{sec:tres}
+В данном разделе были рассмотрены листинги кода реализованных алгоритмов и параметризации, описаны результаты работы программы.
