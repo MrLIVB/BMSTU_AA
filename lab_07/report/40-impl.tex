@@ -1,0 +1,91 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+В данном разделе будут представлены листинги кода реализованных алгоритмов и проведено тестирование.
+
+\section{Средства реализации}
+\label{sec:realisation}
+В данной работе используется язык программирования Python. Среда разработки Visual Studio Code. Для замера процессорного времени используется функция perf\_counter() из библиотеки time.
+\par Замеры времени были произведены на: Intel(R) Core(TM) i5-8250U CPU @1.60GHz 1.80 Ghz, 4 ядра, 8 логических процессоров.
+\par Для формирования словаря была использована библиотека pymorphy2 \cite{pymorphy}.
+
+\section{Листинг кода}
+\label{sec:listings}
+В листинге \ref{code:fullsearch} приведен код алгоритма полного перебора.
+\begin{lstlisting}[caption= Алгоритм полного перебора, label=code:fullsearch]
+def fullsearch(key, dictionary):
+	for record in dictionary:
+		if record[0] == key:
+			return record
+	return None
+\end{lstlisting}
+
+\par В листинге \ref{code:binsearch} представлен код двоичного поиска.
+\begin{lstlisting}[caption= Муравьиный алгоритм, label=code:binsearch]
+def binsearch(key, dictionary):
+	lb = 0
+	rb = len(dictionary) - 1
+	while lb <= rb :
+		mid = (lb + rb) // 2
+		if dictionary[mid][0] == key:
+			return dictionary[mid]
+		elif dictionary[mid][0] < key:
+			lb = mid + 1
+		else:
+			rb = mid - 1
+	return None
+\end{lstlisting}
+
+\par В листинге \ref{code:segmentation} представлен код сегментации и поиска в сегментах.
+\begin{lstlisting}[caption= Класс муравья, label=code:segmentation]
+def statseg(dictionary):
+	segments = []
+	for record in dictionary:
+		added = False
+		for i in range(len(segments)):
+			if record[0][0] == segments[i][0][0]:
+			segments[i][1].append(record)
+			added = True
+		if not added:
+			segments.append([[record[0][0]], [record]])
+	segments.sort(key=lambda record: len(record[1]), reverse=True)
+	
+	i = len(segments) - 1
+	while i > 0:
+		if len(segments[i][1]) < 100:
+			for letter in segments[i][0]:
+				segments[i - 1][0].append(letter)
+			for word in segments[i][1]:
+				segments[i - 1][1].append(word)
+			segments.pop(i)
+		i -= 1
+	segments.sort(key=lambda record: len(record[1]), reverse=True)
+	for segment in segments:
+		segment[1].sort(key=lambda record: record[0])
+	return segments
+
+
+def segmentation(key, segments):
+	for segment in segments:
+		if key[0] in segment[0]:
+			return binsearch(key, segment[2])
+\end{lstlisting}
+
+\section{Тестирование}
+\label{sec:tests}
+Были проведены тесты с первым, последним, средним словом и словом, отсутствующим в словаре.
+\begin{table}[H]
+	\caption{Результаты тестирования}
+	\label{fig:restable}
+\begin{tabular}{|c|c|c|c|l|}
+	\hline
+	\textbf{}                                                               & \textbf{ёкнуть}      & \textbf{абажур}   & \textbf{пролетать}      & ---  \\ \hline
+	\textbf{\begin{tabular}[c]{@{}c@{}}Полный \\ перебор\end{tabular}}      & {[}'ёкнуть', 6978{]} & {[}'абажур', 0{]} & {[}'пролетать', 4768{]} & None \\ \hline
+	\textbf{\begin{tabular}[c]{@{}c@{}}Двоичный \\ поиск\end{tabular}}      & {[}'ёкнуть', 6978{]} & {[}'абажур', 0{]} & {[}'пролетать', 4768{]} & None \\ \hline
+	\textbf{\begin{tabular}[c]{@{}c@{}}С сегменти-\\ рованием\end{tabular}} & {[}'ёкнуть', 6978{]} & {[}'абажур', 0{]} & {[}'пролетать', 4768{]} & None \\ \hline
+\end{tabular}
+\end{table}
+Все тесты пройдены успешно.
+
+\section{Вывод}
+\label{sec:tres}
+В данном разделе были рассмотрены листинги кода реализованных алгоритмов и проведено тестирование.
