@@ -1,0 +1,150 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+В данном разделе будут представлены листинги кода реализованных алгоритмов, указаны использованные оптимизации алгоритма Винограда.
+\section{Средства реализации}
+В данной работе используется язык программирования С++. Среда разработки Visual Studio Code. Для замера процессорного времени используется функция QueryPerformanceCounter из библиотеки windows.h.
+\section{Листинг кода}
+В листингах 3.1--3.3 приведены стандартный алгоритм умножения матриц, алгоритм умножения матриц Винограда и оптимизированный алгоритм Винограда.
+\begin{lstlisting}[caption= Стандартный алгоритм умножения матриц]
+void multiplyMatricesStandard(int** matrix1, int m, int n, int** matrix2, int q, int** result)
+{
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < q; j++)
+		{
+			result[i][j] = 0;
+			for (int k = 0; k < n; k++)
+			{
+				result[i][j] = result[i][j] + matrix1[i][k] * matrix2[k][j];
+			}
+		}
+	}
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption= Алгоритм умножения матриц Винограда]
+void multiplyMatricesWinograd(int **matrix1, int m, int n, int **matrix2, int q, int **result)
+{
+	int *mulH = new int[m];
+	for (int i = 0; i < m; i++)
+	{
+		mulH[i] = 0;
+		for (int k = 0; k < n / 2; k++)
+			mulH[i] = mulH[i] + matrix1[i][2*k] * matrix1[i][2*k + 1];
+	}
+	
+	int *mulV = new int[q];
+	for (int i = 0; i < q; i++)
+	{
+		mulV[i] = 0;
+		for (int k = 0; k < n / 2; k++)
+			mulV[i] = mulV[i] + matrix2[2*k][i] * matrix2[2*k+1][i];
+	}
+	
+	for (int i = 0; i < m; i++)
+		{
+		for (int j = 0; j < q; j++)
+		{
+			result[i][j] = -mulH[i] - mulV[j];
+			for (int k = 0; k < n/2; k++)
+				result[i][j] = result[i][j] + (matrix1[i][2 * k] + matrix2[2 * k + 1][j])*(matrix1[i][2 * k + 1] + matrix2[2 * k][j]);
+		}
+	}
+	
+	if (n % 2 == 1)
+	{
+		for (int i = 0; i < m; i++)
+			for (int j = 0; j < q; j++)
+				result[i][j] = result[i][j] + matrix1[i][n - 1] * matrix2[n-1][j];
+	}
+	delete[] mulH;
+	delete[] mulV;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption= Улучшенный алгоритм матриц Винограда]
+void multiplyMatricesWinogradOptimized(int **matrix1, int m, int n, int **matrix2, int q, int **result)
+{
+	int buf;
+	const int isOdd = n % 2;
+	const int t = n - 1;
+	if (isOdd)
+		n -= 1;
+	
+	
+	int *mulH = new int[m];
+	for (int i = 0; i < m; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+			buf -= matrix1[i][k] * matrix1[i][k + 1];
+		mulH[i] = buf;
+	}
+	
+	int *mulV = new int[q];
+	for (int i = 0; i < q; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+			buf -= matrix2[k][i] * matrix2[k+1][i];
+		mulV[i] = buf;
+	}
+	
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < q; j++)
+		{
+			buf = mulH[i] + mulV[j];
+			for (int k = 0; k < n; k += 2)
+				buf += (matrix1[i][k] + matrix2[k + 1][j]) * (matrix1[i][k + 1] + matrix2[k][j]);
+			if (isOdd==1)
+				buf += matrix1[i][t] * matrix2[t][j];
+			result[i][j] = buf;
+		}
+	}
+	delete[] mulH;
+	delete[] mulV;  
+}
+\end{lstlisting}
+
+\subsection{Оптимизация алгоритма Винограда}
+\begin{enumerate}[1.]
+	\item Заранее вычисляются такие константы как isOdd=n\%2 и t=n-1.
+	\item Накопление результата в буфер, а после помещение буфера в ячейку.
+	\item Где это возможно используются -= и +=.
+	\item Вместо n/2 цикл идёт до n с шагом 2, что представлено в листинге 3.4.
+	\begin{lstlisting}[caption=Оптимизации алгоритма Винограда \textnumero 2--4]
+	for (int i = 0; i < m; i++)
+	{
+		buf = 0;
+		for (int k = 0; k < n; k += 2)
+			buf -= matrix1[i][k] * matrix1[i][k + 1];
+		mulH[i] = buf;
+	}
+	\end{lstlisting}
+	\item Объединены части 3 и 4 алгоритма Винограда, как это отображено в листинге 3.5
+	\begin{lstlisting}[caption=Оптимизация алгоритма Винограда \textnumero 5]
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < q; j++)
+		{
+			buf = mulH[i] + mulV[j];
+			for (int k = 0; k < n; k += 2)
+				buf += (matrix1[i][k] + matrix2[k + 1][j]) * (matrix1[i][k + 1] + matrix2[k][j]);
+			if (isOdd==1)
+				buf += matrix1[i][t] * matrix2[t][j];
+			result[i][j] = buf;
+		}
+	}
+	\end{lstlisting}
+\end{enumerate}
+\section{Проведение тестирования}
+\label{sec:tests}
+Изначально было проведено тестирование стандартного алгоритма умножения матриц на квадратных матрицах размерами $0\times0,\,1\times1,\,3\times3,\,6\times6$ и прямоугольных $1\times2\bullet 2\times1,\,2\times4\bullet4\times2$ и $3\times5\bullet5\times5$, все тесты были пройдены успешно.
+\par После чего была проведена серия тестов на матрицах $A=M\times Q$ и $B=Q\times N$, где M, N, Q принимают значения от 1 до 10, независимо друг от друга, матрицы заполняются случайными значениями. Сначала выполнялось умножение стандартным алгоритмом, результат которого принимался за контрольное значение, после чего результаты алгоритма Винограда и оптимизированного алгоритма Винограда сравнивались с контрольным значением и при совпадении результат считался корректным. Все тесты были пройдены успешно.
+
+\par\textbf{Вывод.}
+\par В данном разделе были рассмотрены листинги кода реализованных алгоритмов, а также их тестирование.
+%%%% mode: latex
+%%%% TeX-master: "rpz"
+%%%% End:
